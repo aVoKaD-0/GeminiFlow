@@ -34,7 +34,7 @@ services:
     container_name: gemini_flow_bot2
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
-      - DATABASE_URL=postgresql://GeminiFlow:postgres@LinarikEmilkaRianka:5432/gemini_flow
+      - DATABASE_URL=postgresql://postgres:GeminiFlow@LinarikEmilkaRianka:5432/gemini_flow
       - REDIS_URL=redis://redis:6379
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - ADMIN_IDS=${ADMIN_IDS}

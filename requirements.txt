@@ -1,0 +1,9 @@
+aiogram
+asyncpg
+sqlalchemy
+alembic
+redis
+cryptography
+google-generativeai
+python-dotenv
+watchfiles

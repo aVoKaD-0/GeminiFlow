@@ -31,6 +31,13 @@ async def set_main_menu_commands(bot: Bot):
         BotCommand(command="start", description="🚀 Главное меню / Перезапустить"),
         BotCommand(command="api_key", description="🔑 Получить API ключ"),
         BotCommand(command="premium", description="💎 Подписка"),
+        # BotCommand(command="admin", description="👑 Админ панель"),
+        BotCommand(command="chats", description="💬 Чаты"),  
+    ]
+    admin_commands = [
+        BotCommand(command="start", description="🚀 Главное меню / Перезапустить"),
+        BotCommand(command="api_key", description="🔑 Получить API ключ"),
+        BotCommand(command="premium", description="💎 Подписка"),
         BotCommand(command="admin", description="👑 Админ панель"),
         BotCommand(command="chats", description="💬 Чаты"),  
     ]
@@ -43,6 +50,7 @@ async def set_main_menu_commands(bot: Bot):
     for admin_id in getattr(config, "ADMIN_IDS", []):
         try:
             await bot.delete_my_commands(scope=BotCommandScopeChat(chat_id=int(admin_id)))
+            await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=int(admin_id)))
         except Exception as e:
             logger.warning(f"Не удалось удалить chat-scope для {admin_id}: {e}")
 

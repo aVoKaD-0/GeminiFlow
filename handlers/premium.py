@@ -9,20 +9,16 @@ import config
 
 router = Router()
 
-# Premium plans with prices in Telegram Stars
-PREMIUM_PLANS = {
-    "1": {"name": "Premium на 1 месяц", "days": 30, "stars": 50},
-    "3": {"name": "Premium на 3 месяца", "days": 90, "stars": 100},
-    "6": {"name": "Premium на 6 месяцев", "days": 180, "stars": 250},
-    "12": {"name": "Premium на 1 год", "days": 365, "stars": 500}
-}
+"""Используем планы из config.PREMIUM_PLANS"""
 
 @router.callback_query(F.data == "premium_info")
 async def show_premium_info(callback: CallbackQuery, user: User, session, has_premium: bool, **kwargs):
     if has_premium:
         expires_text = ""
         if user.subscription_expires_at:
-            expires_text = f"\n🗓 Действует до: {user.subscription_expires_at.strftime('%d.%m.%Y %H:%M')}"
+            from zoneinfo import ZoneInfo
+            dt = user.subscription_expires_at.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Moscow"))
+            expires_text = f"\n🗓 Действует до: {dt.strftime('%d.%m.%Y %H:%M')} MSK"
         
         text = f"""⭐ <b>Premium статус</b>
 
@@ -47,10 +43,10 @@ async def show_premium_info(callback: CallbackQuery, user: User, session, has_pr
 • поддержка файлов до 20 МБ
 
 <b>💰 Цены:</b>
-• 1 месяц - {PREMIUM_PLANS["1"]["stars"]}⭐ (~$1)
-• 3 месяца - {PREMIUM_PLANS["3"]["stars"]}⭐ (~$2.5) 🔥
-• 6 месяцев - {PREMIUM_PLANS["6"]["stars"]}⭐ (~$4.5) 💎
-• 1 год - {PREMIUM_PLANS["12"]["stars"]}⭐ (~$8) ⚡
+• 1 месяц - {config.PREMIUM_PLANS["1"]["stars"]}⭐ (~$1)
+• 3 месяца - {config.PREMIUM_PLANS["3"]["stars"]}⭐ (~$2.5) 🔥
+• 6 месяцев - {config.PREMIUM_PLANS["6"]["stars"]}⭐ (~$4.5) 💎
+• 1 год - {config.PREMIUM_PLANS["12"]["stars"]}⭐ (~$8) ⚡
 
 Выберите подходящий план:"""
 
@@ -65,11 +61,11 @@ async def show_premium_info(callback: CallbackQuery, user: User, session, has_pr
 async def buy_premium(callback: CallbackQuery, **kwargs):
     months = callback.data.split(":")[1]
     
-    if months not in PREMIUM_PLANS:
+    if months not in config.PREMIUM_PLANS:
         await callback.answer("❌ Неверный план", show_alert=True)
         return
     
-    plan = PREMIUM_PLANS[months]
+    plan = config.PREMIUM_PLANS[months]
     
     # Create invoice for Telegram Stars
     prices = [LabeledPrice(label=plan["name"], amount=plan["stars"])]
@@ -101,8 +97,8 @@ async def successful_payment(message, user: User, session, **kwargs):
         months = payload_parts[1]
         user_id = int(payload_parts[2])
         
-        if months in PREMIUM_PLANS and user_id == user.telegram_id:
-            plan = PREMIUM_PLANS[months]
+        if months in config.PREMIUM_PLANS and user_id == user.telegram_id:
+            plan = config.PREMIUM_PLANS[months]
             
             # Grant premium access
             await UserService.grant_premium(session, user.telegram_id, plan["days"])

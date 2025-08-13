@@ -7,3 +7,4 @@ cryptography
 google-generativeai
 python-dotenv
 watchfiles
+APScheduler

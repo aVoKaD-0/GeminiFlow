@@ -12,7 +12,7 @@ services:
       - "5432:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d gemini_flow"]
+      test: ["CMD-SHELL", "pg_isready -U GeminiFlow -d gemini_flow"]
       interval: 5s
       timeout: 5s
       retries: 5

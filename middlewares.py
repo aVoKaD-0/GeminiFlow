@@ -3,8 +3,10 @@ from aiogram.types import Message, CallbackQuery
 from typing import Callable, Dict, Any, Awaitable
 from database import async_session
 from services.user_service import UserService
+from database.models import User
 import time
 import logging
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -104,5 +106,47 @@ class SubscriptionMiddleware(BaseMiddleware):
             # Update premium status
             has_premium = await UserService.has_premium_access(session, user.telegram_id)
             data["has_premium"] = has_premium
+
+            # Уведомления о скором окончании премиума
+            try:
+                if has_premium and getattr(user, "subscription_expires_at", None):
+                    now = datetime.utcnow()
+                    expires_at = user.subscription_expires_at
+                    remaining = expires_at - now
+                    notify_days = {21, 14, 7, 3, 1}
+                    # Отправляем уведомление раз в сутки на указанные дни
+                    days_left = remaining.days
+                    key = f"last_premium_notify_{user.telegram_id}"
+                    # Простейший in-memory кэш на процесс (перезагрузке бота сбросится)
+                    if not hasattr(self, "_notified"):  # type: ignore
+                        self._notified = {}
+                    last = self._notified.get(key)
+                    if days_left in notify_days and last != days_left and remaining.total_seconds() > 0:
+                        text = (
+                            f"⏳ Ваш Premium истекает через {days_left} дн.\n"
+                            f"🗓 До: {expires_at.strftime('%d.%m.%Y %H:%M')} MSK\n"
+                            f"Продлите, чтобы сохранить доступ к про‑моделям и увеличенным лимитам."
+                        )
+                        # Сообщение только в приватных чатах-пользовательских событиях
+                        if isinstance(event, Message):
+                            await event.answer(text)
+                        elif isinstance(event, CallbackQuery):
+                            await event.message.answer(text)
+                        self._notified[key] = days_left
+                elif not has_premium and getattr(user, "subscription_expires_at", None) is None and user.subscription_plan == "free":
+                    # В момент окончания можно уведомить один раз
+                    key = f"ended_premium_notify_{user.telegram_id}"
+                    if not hasattr(self, "_notified_ended"):  # type: ignore
+                        self._notified_ended = {}
+                    if not self._notified_ended.get(key):
+                        end_text = "⚠️ Ваш Premium истёк. Доступ к про‑функциям приостановлен. Вы можете продлить подписку в /premium."
+                        if isinstance(event, Message):
+                            await event.answer(end_text)
+                        elif isinstance(event, CallbackQuery):
+                            await event.message.answer(end_text)
+                        self._notified_ended[key] = True
+            except Exception:
+                # Не мешаем обработке даже при ошибках уведомлений
+                pass
         
         return await handler(event, data)

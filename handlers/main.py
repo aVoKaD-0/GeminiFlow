@@ -7,7 +7,6 @@ from keyboards import get_api_key_keyboard, get_chats_keyboard, get_premium_keyb
 from services.user_service import UserService
 from services.chat_service import ChatService
 import config
-from handlers.premium import PREMIUM_PLANS
 
 router = Router()
 
@@ -69,7 +68,10 @@ async def cmd_premium_command(message: Message, user: User, session, has_premium
     if has_premium:
         expires_text = ""
         if user.subscription_expires_at:
-            expires_text = f"\n🗓 Действует до: {user.subscription_expires_at.strftime('%d.%m.%Y %H:%M')}"
+            # Показываем в московском времени
+            from zoneinfo import ZoneInfo
+            dt = user.subscription_expires_at.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Moscow"))
+            expires_text = f"\n🗓 Действует до: {dt.strftime('%d.%m.%Y %H:%M')} MSK"
         text = f"""⭐ <b>Premium статус</b>
 ✅ <b>Статус:</b> Активен{expires_text}
 <b>Ваши Premium возможности:</b>
@@ -90,10 +92,10 @@ async def cmd_premium_command(message: Message, user: User, session, has_premium
 • поддержка файлов до 20 МБ
 
 <b>💰 Цены:</b>
-• 1 месяц - {PREMIUM_PLANS["1"]["stars"]}⭐ (~$1)
-• 3 месяца - {PREMIUM_PLANS["3"]["stars"]}⭐ (~$2.5) 🔥
-• 6 месяцев - {PREMIUM_PLANS["6"]["stars"]}⭐ (~$4.5) 💎
-• 1 год - {PREMIUM_PLANS["12"]["stars"]}⭐ (~$8) ⚡
+• 1 месяц - {config.PREMIUM_PLANS["1"]["stars"]}⭐ (~$1)
+• 3 месяца - {config.PREMIUM_PLANS["3"]["stars"]}⭐ (~$2.5) 🔥
+• 6 месяцев - {config.PREMIUM_PLANS["6"]["stars"]}⭐ (~$4.5) 💎
+• 1 год - {config.PREMIUM_PLANS["12"]["stars"]}⭐ (~$8) ⚡
 Выберите подходящий план:"""
 
     # Предполагаем, что get_premium_keyboard доступен или импортирован

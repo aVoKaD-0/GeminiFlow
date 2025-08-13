@@ -42,3 +42,11 @@ REFERRAL_REWARD_DAYS = 5
 # Trial Premium
 TRIAL_PREMIUM_ENABLED = os.getenv("TRIAL_PREMIUM_ENABLED", "true").lower() == "true"
 TRIAL_PREMIUM_DAYS = int(os.getenv("TRIAL_PREMIUM_DAYS", "2"))
+
+# Premium plans (Telegram Stars)
+PREMIUM_PLANS = {
+    "1": {"name": "Premium на 1 месяц", "days": 30, "stars": 50},
+    "3": {"name": "Premium на 3 месяца", "days": 90, "stars": 100},
+    "6": {"name": "Premium на 6 месяцев", "days": 180, "stars": 250},
+    "12": {"name": "Premium на 1 год", "days": 365, "stars": 500},
+}

@@ -13,6 +13,7 @@ from middlewares import DatabaseMiddleware, UserMiddleware, RateLimitMiddleware,
 
 # Import handlers
 from handlers import chat_settings, start, api_key, chat, premium, admin, main as main_handler
+from services.scheduler import start_scheduler
 
 # Configure logging
 logging.basicConfig(
@@ -104,6 +105,9 @@ async def main():
     # Set main menu commands
     await set_main_menu_commands(bot)
     
+    # Start scheduler (expire premiums every 10 minutes)
+    start_scheduler()
+
     # Start polling
     logger.info("Starting bot...")
     try:

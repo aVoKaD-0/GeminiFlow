@@ -1,12 +1,29 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, update
 from database.models import User, Chat, Message, Referral
 from datetime import datetime, timedelta
 from typing import Optional
 import config
 import uuid
+from zoneinfo import ZoneInfo
 
 class UserService:
+    @staticmethod
+    def _align_to_next_10_minute_boundary(dt_utc_naive: datetime) -> datetime:
+        """Округляет время вверх до ближайшей границы 10 минут по Москве. Возвращает naive UTC."""
+        utc = ZoneInfo("UTC")
+        msk = ZoneInfo("Europe/Moscow")
+        # делаем aware UTC
+        dt_utc = dt_utc_naive.replace(tzinfo=utc)
+        # переводим в МСК
+        dt_msk = dt_utc.astimezone(msk)
+        dt_msk = dt_msk.replace(second=0, microsecond=0)
+        remainder = dt_msk.minute % 10
+        if remainder != 0:
+            dt_msk = dt_msk + timedelta(minutes=(10 - remainder))
+        # обратно в UTC и возвращаем naive
+        dt_utc_aligned = dt_msk.astimezone(utc)
+        return dt_utc_aligned.replace(tzinfo=None)
     
     @staticmethod
     async def get_or_create_user(session: AsyncSession, telegram_id: int, username: str = None) -> User:
@@ -35,7 +52,13 @@ class UserService:
             
             # Set current chat
             user.current_chat_id = default_chat.id
-            
+            # Trial Premium on registration, с выравниванием на ближайшие 10 минут
+            if getattr(config, "TRIAL_PREMIUM_ENABLED", False) and getattr(config, "TRIAL_PREMIUM_DAYS", 0) > 0:
+                base_end = datetime.utcnow() + timedelta(days=config.TRIAL_PREMIUM_DAYS)
+                aligned_end = UserService._align_to_next_10_minute_boundary(base_end)
+                user.subscription_plan = "pro"
+                user.subscription_expires_at = aligned_end
+
             await session.commit()
         
         return user
@@ -61,9 +84,24 @@ class UserService:
             if user.subscription_expires_at and user.subscription_expires_at > datetime.utcnow():
                 return True
             else:
-                # Expired subscription
-                user.subscription_plan = "free"
-                user.subscription_expires_at = None
+                # Expired subscription: жёстко обновляем в БД
+                await session.execute(
+                    update(User)
+                    .where(User.telegram_id == telegram_id)
+                    .values(subscription_plan="free", subscription_expires_at=None)
+                )
+                # Автодаунгрейд моделей чатов на бесплатную
+                try:
+                    free_models = getattr(config, "GEMINI_FREE_MODELS", ["gemini-1.5-flash"]) or ["gemini-1.5-flash"]
+                    default_free_model = free_models[-1]
+                    result_chats = await session.execute(select(Chat).where(Chat.user_id == telegram_id))
+                    user_chats = result_chats.scalars().all()
+                    for chat in user_chats:
+                        if chat.model_name not in free_models:
+                            chat.model_name = default_free_model
+                except Exception:
+                    # Не прерываем процесс, даже если обновление моделей не удалось
+                    pass
                 await session.commit()
         
         return False
@@ -124,8 +162,10 @@ class UserService:
         user = result.scalar_one_or_none()
         
         if user:
+            base_end = datetime.utcnow() + timedelta(days=days)
+            aligned_end = UserService._align_to_next_10_minute_boundary(base_end)
             user.subscription_plan = "pro"
-            user.subscription_expires_at = datetime.utcnow() + timedelta(days=days)
+            user.subscription_expires_at = aligned_end
             await session.commit()
     
     @staticmethod

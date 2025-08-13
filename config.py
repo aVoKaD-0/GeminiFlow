@@ -17,8 +17,8 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 
 # Gemini Configuration
-GEMINI_FREE_MODELS = ["gemini-1.5-flash"]
-GEMINI_PRO_MODELS = ["gemini-1.5-pro", "gemini-1.5-flash"]
+GEMINI_FREE_MODELS = ["gemini-1.5-flash-lite", "gemini-1.5-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash-lite", "gemini-2.5-flash"]
+GEMINI_PRO_MODELS = ["gemini-1.5-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.0-pro", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro"]
 
 # Subscription Configuration
 FREE_CHAT_LIMIT = 1
@@ -37,4 +37,8 @@ USER_MESSAGE_RATE_LIMIT = 10  # messages per minute
 
 # Referral System
 REFERRAL_TARGET_COUNT = 5
-REFERRAL_REWARD_DAYS = 30
+REFERRAL_REWARD_DAYS = 5
+
+# Trial Premium
+TRIAL_PREMIUM_ENABLED = os.getenv("TRIAL_PREMIUM_ENABLED", "true").lower() == "true"
+TRIAL_PREMIUM_DAYS = int(os.getenv("TRIAL_PREMIUM_DAYS", "2"))

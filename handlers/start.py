@@ -8,7 +8,7 @@ from keyboards import get_start_keyboard
 router = Router()
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, user: User, session, **kwargs):
+async def cmd_start(message: Message, user: User, session, has_premium: bool, **kwargs):
     # Check for referral link
     if message.text and len(message.text.split()) > 1:
         args = message.text.split()[1]
@@ -41,6 +41,17 @@ async def cmd_start(message: Message, user: User, session, **kwargs):
         reply_markup=get_start_keyboard(),
         parse_mode="HTML"
     )
+
+    # Дополнительное уведомление, если у пользователя активен Premium
+    if has_premium:
+        expires_text = ""
+        if getattr(user, "subscription_expires_at", None):
+            expires_text = f" до {user.subscription_expires_at.strftime('%d.%m.%Y %H:%M')}"
+        await message.answer(
+            f"🎉 У вас активен Premium{expires_text}!\n"
+            f"🔑 Добавьте API‑ключ командой /api_key, чтобы попробовать все возможности.",
+            parse_mode="HTML"
+        )
 
 @router.callback_query(F.data == "back_to_start")
 async def back_to_start(callback: CallbackQuery, user: User, **kwargs):

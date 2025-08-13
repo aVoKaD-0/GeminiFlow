@@ -77,7 +77,7 @@ async def cmd_premium_command(message: Message, user: User, session, has_premium
 • 💬 До {config.PREMIUM_CHAT_LIMIT} чатов
 • ⚡ Приоритетная обработка
 • 🎯 Выбор модели для каждого чата
-• поддержка файлов до 10 МБ
+• поддержка файлов до 20 МБ
 
 <b>Спасибо за поддержку проекта! 💖</b>"""
     else:

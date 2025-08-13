@@ -2,6 +2,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from typing import List
 from database.models import Chat
 import uuid
+from config import PREMIUM_PLANS
 
 def get_start_keyboard() -> InlineKeyboardMarkup:
     """Main start keyboard"""
@@ -61,10 +62,10 @@ def get_premium_keyboard(has_premium: bool = False, expires_at = None) -> Inline
     keyboard = []
     
     if not has_premium:
-        keyboard.append([InlineKeyboardButton(text="💳 1 месяц - 100⭐", callback_data="buy_premium:1")])
-        keyboard.append([InlineKeyboardButton(text="💳 3 месяца - 250⭐", callback_data="buy_premium:3")])
-        keyboard.append([InlineKeyboardButton(text="💳 6 месяцев - 450⭐", callback_data="buy_premium:6")])
-        keyboard.append([InlineKeyboardButton(text="💳 1 год - 800⭐", callback_data="buy_premium:12")])
+        keyboard.append([InlineKeyboardButton(text=f"💳 1 месяц - {PREMIUM_PLANS['1']['stars']}⭐", callback_data="buy_premium:1")])
+        keyboard.append([InlineKeyboardButton(text=f"💳 3 месяца - {PREMIUM_PLANS['3']['stars']}⭐", callback_data="buy_premium:3")])
+        keyboard.append([InlineKeyboardButton(text=f"💳 6 месяцев - {PREMIUM_PLANS['6']['stars']}⭐", callback_data="buy_premium:6")])
+        keyboard.append([InlineKeyboardButton(text=f"💳 1 год - {PREMIUM_PLANS['12']['stars']}⭐", callback_data="buy_premium:12")])
     
     keyboard.append([InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_start")])
     
